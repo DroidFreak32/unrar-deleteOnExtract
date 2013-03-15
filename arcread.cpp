@@ -93,7 +93,11 @@ size_t Archive::ReadHeader()
         ErrHandler.Exit(RARX_USERBREAK);
       }
 #else
+#ifndef __BIONIC__
       if (!GetPassword(PASSWORD_ARCHIVE,FileName,FileNameW,Cmd->Password,ASIZE(Cmd->Password)))
+#else
+      if (!GetPassword(PASSWORD_ARCHIVE,FileName,Cmd->Password,ASIZE(Cmd->Password)))
+#endif
       {
         Close();
         ErrHandler.Exit(RARX_USERBREAK);
@@ -139,7 +143,7 @@ size_t Archive::ReadHeader()
     if (ShortBlock.HeadType==MAIN_HEAD && (ShortBlock.Flags & MHD_COMMENT)!=0)
     {
       // Old style (up to RAR 2.9) main archive comment embedded into
-      // the main archive header found. While we can read the entire 
+      // the main archive header found. While we can read the entire
       // ShortBlock.HeadSize here and remove this part of "if", it would be
       // waste of memory, because we'll read and process this comment data
       // in other function anyway and we do not need them here now.
@@ -185,7 +189,7 @@ size_t Archive::ReadHeader()
           Raw.Get(hd->HighPackSize);
           Raw.Get(hd->HighUnpSize);
         }
-        else 
+        else
         {
           hd->HighPackSize=hd->HighUnpSize=0;
           if (hd->UnpSize==0xffffffff)
@@ -230,6 +234,7 @@ size_t Archive::ReadHeader()
         else
           if (hd->HeadType==FILE_HEAD)
           {
+#ifndef __BIONIC__
             if (hd->Flags & LHD_UNICODE)
             {
               EncodeFileName NameCoder;
@@ -252,9 +257,12 @@ size_t Archive::ReadHeader()
             }
             else
               *hd->FileNameW=0;
+#endif
 #ifndef SFX_MODULE
             ConvertNameCase(hd->FileName);
+#ifndef __BIONIC__
             ConvertNameCase(hd->FileNameW);
+#endif
 #endif
             ConvertUnknownHeader();
           }
@@ -319,8 +327,10 @@ size_t Archive::ReadHeader()
           if (!EncBroken)
           {
 #ifndef SHELL_EXT
+#ifndef __BIONIC__
             Log(Archive::FileName,St(MLogFileHead),IntNameToExt(hd->FileName));
             Alarm();
+#endif
 #endif
           }
         }
@@ -541,6 +551,7 @@ void Archive::ConvertNameCase(char *Name)
 
 
 #ifndef SFX_MODULE
+#ifndef __BIONIC__
 void Archive::ConvertNameCase(wchar *Name)
 {
   if (Cmd->ConvertNames==NAMES_UPPERCASE)
@@ -548,6 +559,7 @@ void Archive::ConvertNameCase(wchar *Name)
   if (Cmd->ConvertNames==NAMES_LOWERCASE)
     wcslower(Name);
 }
+#endif
 #endif
 
 
@@ -596,7 +608,7 @@ void Archive::ConvertAttributes()
 
   if (mask == (mode_t) -1)
   {
-    // umask call returns the current umask value. Argument (022) is not 
+    // umask call returns the current umask value. Argument (022) is not
     // really important here.
     mask = umask(022);
 
@@ -668,8 +680,8 @@ void Archive::ConvertUnknownHeader()
 #if defined(_WIN_ALL) || defined(_EMX)
     // ':' in file names is allowed in Unix, but not in Windows.
     // Even worse, file data will be written to NTFS stream on NTFS,
-    // so automatic name correction on file create error in extraction 
-    // routine does not work. In Windows and DOS versions we better 
+    // so automatic name correction on file create error in extraction
+    // routine does not work. In Windows and DOS versions we better
     // replace ':' now.
     if (*s==':')
       *s='_';
@@ -685,8 +697,8 @@ void Archive::ConvertUnknownHeader()
 #if defined(_WIN_ALL) || defined(_EMX)
     // ':' in file names is allowed in Unix, but not in Windows.
     // Even worse, file data will be written to NTFS stream on NTFS,
-    // so automatic name correction on file create error in extraction 
-    // routine does not work. In Windows and DOS versions we better 
+    // so automatic name correction on file create error in extraction
+    // routine does not work. In Windows and DOS versions we better
     // replace ':' now.
     if (*s==':')
       *s='_';

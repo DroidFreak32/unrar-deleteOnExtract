@@ -20,9 +20,13 @@ void CommandData::Init()
   Close();
 
   *Command=0;
+#ifndef __BIONIC__
   *CommandW=0;
+#endif
   *ArcName=0;
+#ifndef __BIONIC__
   *ArcNameW=0;
+#endif
   FileLists=false;
   NoMoreSwitches=false;
 
@@ -126,7 +130,11 @@ void CommandData::ParseCommandLine(int argc, char *argv[])
   }
 #else
   for (int I=1;I<argc;I++)
+#ifndef __BIONIC__
     ParseArg(argv[I],NULL);
+#else
+    ParseArg(argv[I]);
+#endif
 #endif
   ParseDone();
 }
@@ -134,20 +142,29 @@ void CommandData::ParseCommandLine(int argc, char *argv[])
 
 
 #ifndef SFX_MODULE
+#ifndef __BIONIC__
 void CommandData::ParseArg(char *Arg,wchar *ArgW)
+#else
+void CommandData::ParseArg(char *Arg)
+#endif
 {
   if (IsSwitch(*Arg) && !NoMoreSwitches)
     if (Arg[1]=='-')
       NoMoreSwitches=true;
     else
+#ifndef __BIONIC__
       ProcessSwitch(Arg+1,(ArgW!=NULL && *ArgW!=0 ? ArgW+1:NULL));
+#else
+      ProcessSwitch(Arg+1);
+#endif
   else
     if (*Command==0)
     {
       strncpyz(Command,Arg,ASIZE(Command));
+#ifndef __BIONIC__
       if (ArgW!=NULL)
         wcsncpy(CommandW,ArgW,ASIZE(CommandW));
-
+#endif
 
 #ifndef GUI
       *Command=etoupper(*Command);
@@ -159,15 +176,22 @@ void CommandData::ParseArg(char *Arg,wchar *ArgW)
 #endif
     }
     else
+#ifndef __BIONIC__
       if (*ArcName==0 && *ArcNameW==0)
+#else
+      if (*ArcName==0)
+#endif
       {
         strncpyz(ArcName,Arg,ASIZE(ArcName));
+#ifndef __BIONIC__
         if (ArgW!=NULL)
           wcsncpyz(ArcNameW,ArgW,ASIZE(ArcNameW));
+#endif
       }
       else
       {
         bool EndSeparator; // If last character is the path separator.
+#ifndef __BIONIC__
         if (ArgW!=NULL)
         {
           size_t Length=wcslen(ArgW);
@@ -176,10 +200,13 @@ void CommandData::ParseArg(char *Arg,wchar *ArgW)
         }
         else
         {
+#endif
           size_t Length=strlen(Arg);
           char EndChar=Length==0 ? 0:Arg[Length-1];
           EndSeparator=IsDriveDiv(EndChar) || IsPathDiv(EndChar);
+#ifndef __BIONIC__
         }
+#endif
 
         char CmdChar=etoupper(*Command);
         bool Add=strchr("AFUM",CmdChar)!=NULL;
@@ -187,18 +214,32 @@ void CommandData::ParseArg(char *Arg,wchar *ArgW)
         if (EndSeparator && !Add)
         {
           strncpyz(ExtrPath,Arg,ASIZE(ExtrPath));
+#ifndef __BIONIC__
           if (ArgW!=NULL)
             wcsncpyz(ExtrPathW,ArgW,ASIZE(ExtrPathW));
+#endif
         }
         else
           if ((Add || CmdChar=='T') && (*Arg!='@' || ListMode==RCLM_REJECT_LISTS))
+#ifndef __BIONIC__
             FileArgs->AddString(Arg,ArgW);
+#else
+            FileArgs->AddString(Arg);
+#endif
           else
           {
             FindData FileData;
+#ifndef __BIONIC__
             bool Found=FindFile::FastFind(Arg,ArgW,&FileData);
-            if ((!Found || ListMode==RCLM_ACCEPT_LISTS) && 
+#else
+            bool Found=FindFile::FastFind(Arg,&FileData);
+#endif
+            if ((!Found || ListMode==RCLM_ACCEPT_LISTS) &&
+#ifndef __BIONIC__
                 ListMode!=RCLM_REJECT_LISTS && *Arg=='@' && !IsWildcard(Arg,ArgW))
+#else
+                ListMode!=RCLM_REJECT_LISTS && *Arg=='@' && !IsWildcard(Arg))
+#endif
             {
               FileLists=true;
 
@@ -212,8 +253,12 @@ void CommandData::ParseArg(char *Arg,wchar *ArgW)
                 Charset=RCH_OEM;
 #endif
 
+#ifndef __BIONIC__
               wchar *WideArgName=(ArgW!=NULL && *ArgW!=0 ? ArgW+1:NULL);
               ReadTextFile(Arg+1,WideArgName,FileArgs,false,true,Charset,true,true,true);
+#else
+              ReadTextFile(Arg+1,FileArgs,false,true,Charset,true,true,true);
+#endif
 
             }
             else
@@ -221,14 +266,20 @@ void CommandData::ParseArg(char *Arg,wchar *ArgW)
               {
                 strncpyz(ExtrPath,Arg,ASIZE(ExtrPath)-1);
                 AddEndSlash(ExtrPath);
+#ifndef __BIONIC__
                 if (ArgW!=NULL)
                 {
                   wcsncpyz(ExtrPathW,ArgW,ASIZE(ExtrPathW)-1);
                   AddEndSlash(ExtrPathW);
                 }
+#endif
               }
               else
+#ifndef __BIONIC__
                 FileArgs->AddString(Arg,ArgW);
+#else
+                FileArgs->AddString(Arg);
+#endif
           }
       }
 }
@@ -294,7 +345,11 @@ bool CommandData::PreprocessSwitch(const char *Switch)
 void CommandData::ReadConfig()
 {
   StringList List;
+#ifndef __BIONIC__
   if (ReadTextFile(DefConfigName,NULL,&List,true))
+#else
+  if (ReadTextFile(DefConfigName,&List,true))
+#endif
   {
     char *Str;
     while ((Str=List.GetString())!=NULL)
@@ -332,10 +387,17 @@ void CommandData::ProcessSwitchesString(char *Str)
 
 
 #if !defined(SFX_MODULE)
+#ifndef __BIONIC__
 void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
+#else
+void CommandData::ProcessSwitch(const char *Switch)
+#endif
 {
-
+#ifndef __BIONIC__
   bool WidePresent=SwitchW!=NULL && *SwitchW!=0; // If 'true', SwitchW is not empty.
+#else
+  bool WidePresent=false;
+#endif
 
   switch(etoupper(Switch[0]))
   {
@@ -491,8 +553,10 @@ void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
           break;
         case 'P':
           strcpy(ArcPath,Switch+2);
+#ifndef __BIONIC__
           if (WidePresent)
             wcscpy(ArcPathW,SwitchW+2);
+#endif
           break;
         case 'S':
           SyncFiles=true;
@@ -605,7 +669,11 @@ void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
             Charset=RCH_OEM;
 #endif
 
+#ifndef __BIONIC__
           ReadTextFile(Switch+2,NULL,Args,false,true,Charset,true,true,true);
+#else
+          ReadTextFile(Switch+2,Args,false,true,Charset,true,true,true);
+#endif
         }
         else
           Args->AddString(Switch+1);
@@ -651,12 +719,20 @@ void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
     case 'P':
       if (Switch[1]==0)
       {
-        GetPassword(PASSWORD_GLOBAL,NULL,NULL,Password,ASIZE(Password));
+#ifndef __BIONIC__
+        GetPassword(PASSWORD_GLOBAL,NULL,NULL,&Password,ASIZE(Password));
+#else
+        GetPassword(PASSWORD_GLOBAL,NULL,&Password,ASIZE(Password));
+#endif
         eprintf("\n");
       }
       else
       {
+#ifndef __BIONIC__
         CharToWide(Switch+1,Password,ASIZE(Password));
+#else
+        strncpyz(Password,Switch+1,ASIZE(Password));
+#endif
         Password[ASIZE(Password)-1]=0;
       }
       break;
@@ -666,19 +742,30 @@ void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
         EncryptHeaders=true;
         if (Switch[2]!=0)
         {
+#ifndef __BIONIC__
           CharToWide(Switch+2,Password,ASIZE(Password));
-          Password[ASIZE(Password)-1]=0;
+#else
+          strncpyz(Password,Switch+1,ASIZE(Password));
+#endif
         }
         else
           if (*Password==0)
           {
+#ifndef __BIONIC__
             GetPassword(PASSWORD_GLOBAL,NULL,NULL,Password,ASIZE(Password));
+#else
+            GetPassword(PASSWORD_GLOBAL,NULL,Password,ASIZE(Password));
+#endif
             eprintf("\n");
           }
       }
       break;
     case 'Z':
+#ifndef __BIONIC__
       if (Switch[1]==0 && (!WidePresent || SwitchW[1]==0))
+#else
+      if (Switch[1]==0)
+#endif
       {
 #ifndef GUI // stdin is not supported by WinRAR.
         // If comment file is not specified, we read data from stdin.
@@ -688,8 +775,10 @@ void CommandData::ProcessSwitch(const char *Switch,const wchar *SwitchW)
       else
       {
         strncpyz(CommentFile,Switch+1,ASIZE(CommentFile));
+#ifndef __BIONIC__
         if (WidePresent)
           wcsncpyz(CommentFileW,SwitchW+1,ASIZE(CommentFileW));
+#endif
       }
       break;
     case 'M':
@@ -1109,14 +1198,14 @@ bool CommandData::ExclCheckArgs(StringList *Args,bool Dir,char *CheckName,bool C
       {
         // We process the directory and have the directory exclusion mask.
         // So let's convert "mask\" to "mask" and process it normally.
-        
+
         *LastMaskChar=0;
       }
       else
       {
         // If mask has wildcards in name part and does not have the trailing
         // '\' character, we cannot use it for directories.
-      
+
         if (IsWildcard(PointToName(CurMask)))
           continue;
       }
@@ -1222,7 +1311,11 @@ bool CommandData::SizeCheck(int64 Size)
 
 int CommandData::IsProcessFile(FileHeader &NewLhd,bool *ExactMatch,int MatchType)
 {
+#ifndef __BIONIC__
   if (strlen(NewLhd.FileName)>=NM || wcslen(NewLhd.FileNameW)>=NM)
+#else
+  if (strlen(NewLhd.FileName)>=NM)
+#endif
     return(0);
   bool Dir=(NewLhd.Flags & LHD_WINDOWMASK)==LHD_DIRECTORY;
   if (ExclCheck(NewLhd.FileName,Dir,false,true))
@@ -1238,9 +1331,14 @@ int CommandData::IsProcessFile(FileHeader &NewLhd,bool *ExactMatch,int MatchType
   char *ArgName;
   wchar *ArgNameW;
   FileArgs->Rewind();
+#ifndef __BIONIC__
   for (int StringCount=1;FileArgs->GetString(&ArgName,&ArgNameW);StringCount++)
+#else
+  for (int StringCount=1;FileArgs->GetString(&ArgName);StringCount++)
+#endif
   {
 #ifndef SFX_MODULE
+#ifndef __BIONIC__
     bool Unicode=(NewLhd.Flags & LHD_UNICODE) || ArgNameW!=NULL && *ArgNameW!=0;
     if (Unicode)
     {
@@ -1267,6 +1365,7 @@ int CommandData::IsProcessFile(FileHeader &NewLhd,bool *ExactMatch,int MatchType
       if (CorrectUnicode)
         continue;
     }
+#endif
 #endif
     if (CmpName(ArgName,NewLhd.FileName,MatchType))
     {
@@ -1299,17 +1398,29 @@ void CommandData::ProcessCommand()
   if (strchr("AFUMD",*Command)==NULL)
   {
     if (GenerateArcName)
+#ifndef __BIONIC__
       GenerateArchiveName(ArcName,ArcNameW,ASIZE(ArcName),GenerateMask,false);
+#else
+      GenerateArchiveName(ArcName,ASIZE(ArcName),GenerateMask,false);
+#endif
 
     StringList ArcMasks;
     ArcMasks.AddString(ArcName);
     ScanTree Scan(&ArcMasks,Recurse,SaveLinks,SCAN_SKIPDIRS);
     FindData FindData;
     while (Scan.GetNext(&FindData)==SCAN_SUCCESS)
+#ifndef __BIONIC__
       AddArcName(FindData.Name,FindData.NameW);
+#else
+      AddArcName(FindData.Name);
+#endif
   }
   else
+#ifndef __BIONIC__
     AddArcName(ArcName,NULL);
+#else
+    AddArcName(ArcName);
+#endif
 #endif
 
   switch(Command[0])
@@ -1339,15 +1450,30 @@ void CommandData::ProcessCommand()
 #endif
 
 
+#ifndef __BIONIC__
 void CommandData::AddArcName(const char *Name,const wchar *NameW)
+#else
+void CommandData::AddArcName(const char *Name)
+#endif
 {
+#ifndef __BIONIC__
   ArcNames->AddString(Name,NameW);
+#else
+  ArcNames->AddString(Name);
+#endif
 }
 
-
+#ifndef __BIONIC__
 bool CommandData::GetArcName(char *Name,wchar *NameW,int MaxSize)
+#else
+bool CommandData::GetArcName(char *Name,int MaxSize)
+#endif
 {
+#ifndef __BIONIC__
   if (!ArcNames->GetString(Name,NameW,NM))
+#else
+  if (!ArcNames->GetString(Name,NM))
+#endif
     return(false);
   return(true);
 }

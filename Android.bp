@@ -29,7 +29,6 @@ cc_binary {
         "ulinks.cpp",
         "errhnd.cpp",
         "rarvm.cpp",
-        "secpassword.cpp",
         "rijndael.cpp",
         "getbits.cpp",
         "sha1.cpp",

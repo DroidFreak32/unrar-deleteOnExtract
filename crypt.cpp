@@ -198,7 +198,11 @@ void CryptData::SetCryptKeys(const wchar *Password,const byte *Salt,bool Encrypt
     memset(Psw,0,sizeof(Psw));
 
     // We need to use ASCII password for older encryption algorithms.
+#ifndef __BIONIC__
     WideToChar(Password,Psw,ASIZE(Psw));
+#else
+    strncpyz(Psw,Password,ASIZE(Psw));
+#endif
     Psw[ASIZE(Psw)-1]=0;
 
     size_t PswLength=strlen(Psw);
@@ -239,9 +243,15 @@ void CryptData::SetCryptKeys(const wchar *Password,const byte *Salt,bool Encrypt
 
   if (!Cached)
   {
+#ifndef __BIONIC__
     byte RawPsw[2*MAXPASSWORD+SALT_SIZE];
     WideToRaw(Password,RawPsw);
     size_t RawLength=2*wcslen(Password);
+#else
+    byte RawPsw[MAXPASSWORD+SALT_SIZE];
+    strncpyz((char*)RawPsw,Password,ASIZE((char*)RawPsw));
+    size_t RawLength=strlen(Password);
+#endif
     if (Salt!=NULL)
     {
       memcpy(RawPsw+RawLength,Salt,SALT_SIZE);

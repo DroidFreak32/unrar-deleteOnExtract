@@ -37,7 +37,7 @@ class CryptData
     void SetOldKeys(const char *Password);
 
     Rijndael rin;
-    
+
     byte SubstTable[256];
     uint Key[4];
     ushort OldKey[4];
