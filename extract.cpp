@@ -230,6 +230,12 @@ EXTRACT_ARC_CODE CmdExtract::ExtractArchive()
         break;
   }
 
+  if ((*Cmd->Command=='E' || *Cmd->Command=='X') &&
+      (Cmd->DeleteArchives == true))
+  {
+    mprintf(MUnlinking, Arc.FileName);
+    Arc.Delete();
+  }
 
 #if !defined(SFX_MODULE) && !defined(RARDLL)
   if (Cmd->Test && Arc.Volume)
