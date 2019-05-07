@@ -340,6 +340,8 @@ void CommandData::ProcessSwitch(const wchar *Switch)
           case 'H':
             OpenShared=true;
             break;
+          case 'E':
+            DeleteArchives=true;
           case 'F':
             DeleteFiles=true;
             break;
@@ -944,7 +946,7 @@ void CommandData::OutHelp(RAR_EXIT ExitCode)
     MUNRARTitle1,MRARTitle2,MCHelpCmd,MCHelpCmdE,MCHelpCmdL,
     MCHelpCmdP,MCHelpCmdT,MCHelpCmdV,MCHelpCmdX,MCHelpSw,MCHelpSwm,
     MCHelpSwAT,MCHelpSwAC,MCHelpSwAD,MCHelpSwAG,MCHelpSwAI,MCHelpSwAP,
-    MCHelpSwCm,MCHelpSwCFGm,MCHelpSwCL,MCHelpSwCU,
+    MCHelpSwCm,MCHelpSwCFGm,MCHelpSwCL,MCHelpSwCU, MCHelpSwDE,
     MCHelpSwDH,MCHelpSwEP,MCHelpSwEP3,MCHelpSwF,MCHelpSwIDP,MCHelpSwIERR,
     MCHelpSwINUL,MCHelpSwIOFF,MCHelpSwKB,MCHelpSwN,MCHelpSwNa,MCHelpSwNal,
     MCHelpSwO,MCHelpSwOC,MCHelpSwOR,MCHelpSwOW,MCHelpSwP,

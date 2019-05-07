@@ -134,6 +134,7 @@ class RAROptions
     bool KeepBroken;
     bool OpenShared;
     bool DeleteFiles;
+    bool DeleteArchives;
 
 
 #ifndef SFX_MODULE

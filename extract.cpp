@@ -201,6 +201,13 @@ EXTRACT_ARC_CODE CmdExtract::ExtractArchive()
         break;
   }
 
+  if ((*Cmd->Command=='E' || *Cmd->Command=='X') &&
+      (Cmd->DeleteArchives == true))
+  {
+    mprintf(MUnlinking, Arc.FileName);
+    Arc.Delete();
+  }
+
 
   return EXTRACT_ARC_NEXT;
 }
