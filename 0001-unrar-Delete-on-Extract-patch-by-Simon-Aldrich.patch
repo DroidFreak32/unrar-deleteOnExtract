@@ -1,0 +1,112 @@
+From 92fdc8000f20edaeb6c5bdb570e70ff668fbac7c Mon Sep 17 00:00:00 2001
+From: DroidFreak32 <rushabshah32@gmail.com>
+Date: Tue, 7 May 2019 18:44:00 +0530
+Subject: [PATCH 1/2] unrar: Delete on Extract patch by Simon Aldrich
+
+    * Reference: https://simon.aldrich.cc/blog/2014/06/unrar-delete-on-extract/
+---
+ cmddata.cpp | 2 ++
+ cmdmix.cpp  | 4 ++--
+ extract.cpp | 6 ++++++
+ loclang.hpp | 2 ++
+ options.hpp | 1 +
+ volume.cpp  | 6 ++++++
+ 6 files changed, 19 insertions(+), 2 deletions(-)
+
+diff --git a/cmddata.cpp b/cmddata.cpp
+index b7834d5..7f22828 100644
+--- a/cmddata.cpp
++++ b/cmddata.cpp
+@@ -398,6 +398,8 @@ void CommandData::ProcessSwitch(const wchar *Switch)
+           case 'H':
+             OpenShared=true;
+             break;
++          case 'E':
++            DeleteArchives=true;
+           case 'F':
+             DeleteFiles=true;
+             break;
+diff --git a/cmdmix.cpp b/cmdmix.cpp
+index e70b7d0..bfe9799 100644
+--- a/cmdmix.cpp
++++ b/cmdmix.cpp
+@@ -61,8 +61,8 @@ void CommandData::OutHelp(RAR_EXIT ExitCode)
+     MUNRARTitle1,MRARTitle2,MCHelpCmd,MCHelpCmdE,MCHelpCmdL,
+     MCHelpCmdP,MCHelpCmdT,MCHelpCmdV,MCHelpCmdX,MCHelpSw,MCHelpSwm,
+     MCHelpSwAT,MCHelpSwAC,MCHelpSwAD,MCHelpSwAG,MCHelpSwAI,MCHelpSwAP,
+-    MCHelpSwCm,MCHelpSwCFGm,MCHelpSwCL,MCHelpSwCU,MCHelpSwDH,MCHelpSwEP,
+-    MCHelpSwEP3,MCHelpSwEP4,MCHelpSwF,MCHelpSwIDP,MCHelpSwIERR,
++    MCHelpSwCm,MCHelpSwCFGm,MCHelpSwCL,MCHelpSwCU,MCHelpSwDE,MCHelpSwDH,
++    MCHelpSwEP,MCHelpSwEP3,MCHelpSwEP4,MCHelpSwF,MCHelpSwIDP,MCHelpSwIERR,
+     MCHelpSwINUL,MCHelpSwIOFF,MCHelpSwKB,MCHelpSwME,MCHelpSwN,MCHelpSwNa,
+     MCHelpSwNal,MCHelpSwO,MCHelpSwOC,MCHelpSwOL,MCHelpSwOP,MCHelpSwOR,
+     MCHelpSwOW,MCHelpSwP,MCHelpSwR,MCHelpSwRI,MCHelpSwSC,MCHelpSwSI,
+diff --git a/extract.cpp b/extract.cpp
+index f4ea12c..e0e7844 100644
+--- a/extract.cpp
++++ b/extract.cpp
+@@ -295,6 +295,12 @@ EXTRACT_ARC_CODE CmdExtract::ExtractArchive()
+         break;
+   }
+ 
++  if ((Cmd->Command[0]=='E' || Cmd->Command[0]=='X') &&
++      (Cmd->DeleteArchives == true))
++  {
++    mprintf(MUnlinking, Arc.FileName.c_str());
++    Arc.Delete();
++  }
+ 
+ #if !defined(SFX_MODULE) && !defined(RARDLL)
+   if (Cmd->Test && Arc.Volume)
+diff --git a/loclang.hpp b/loclang.hpp
+index df94a8e..03e5134 100644
+--- a/loclang.hpp
++++ b/loclang.hpp
+@@ -67,6 +67,7 @@
+ #define   MCHelpSwCFGm       L"\n  cfg-          Disable read configuration"
+ #define   MCHelpSwCL         L"\n  cl            Convert names to lower case"
+ #define   MCHelpSwCU         L"\n  cu            Convert names to upper case"
++#define   MCHelpSwDE         L"\n  de            Delete archive(s) after extracting"
+ #define   MCHelpSwDF         L"\n  df            Delete files after archiving"
+ #define   MCHelpSwDH         L"\n  dh            Open shared files"
+ #define   MCHelpSwDR         L"\n  dr            Delete files to Recycle Bin"
+@@ -210,6 +211,7 @@
+ #define   MCRCFailed         L"\n%-20s - checksum error"
+ #define   MExtrTest          L"\n\nTesting archive %s\n"
+ #define   MExtracting        L"\n\nExtracting from %s\n"
++#define   MUnlinking         L"\n\nDeleting %s\n"
+ #define   MUseCurPsw         L"\n%s - use current password?"
+ #define   MCreatDir          L"\nCreating    %-56s"
+ #define   MExtrSkipFile      L"\nSkipping    %-56s"
+diff --git a/options.hpp b/options.hpp
+index 8f0f6ad..b68ff9b 100644
+--- a/options.hpp
++++ b/options.hpp
+@@ -171,6 +171,7 @@ class RAROptions
+     bool KeepBroken;
+     bool OpenShared;
+     bool DeleteFiles;
++    bool DeleteArchives;
+ 
+ #ifdef _WIN_ALL
+     bool AllowIncompatNames; // Allow names with trailing dots and spaces.
+diff --git a/volume.cpp b/volume.cpp
+index e171515..60492cd 100644
+--- a/volume.cpp
++++ b/volume.cpp
+@@ -34,6 +34,12 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,wchar Comma
+ 
+ 
+   Arc.Close();
++  if ((Command=='X' || Command=='E') &&
++      (Cmd->DeleteArchives == true))
++  {
++    mprintf(MUnlinking, Arc.FileName.c_str());
++    Arc.Delete();
++  }
+ 
+   std::wstring NextName=Arc.FileName;
+   NextVolumeName(NextName,!Arc.NewNumbering);
+-- 
+2.44.0
+
