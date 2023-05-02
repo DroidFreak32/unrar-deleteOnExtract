@@ -15,13 +15,10 @@
 #include "rartypes.hpp"
 #include "rardefs.hpp"
 #include "rarlang.hpp"
-#ifdef __BIONIC__
 #include "unicode.hpp"
-#endif
 #include "errhnd.hpp"
 #include "array.hpp"
 #include "timefn.hpp"
-#include "secpassword.hpp"
 #include "options.hpp"
 #include "headers.hpp"
 #include "pathfn.hpp"

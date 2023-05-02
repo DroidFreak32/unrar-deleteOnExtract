@@ -5,17 +5,13 @@ class Pack;
 
 enum {EN_LOCK=1,EN_VOL=2,EN_FIRSTVOL=4};
 
-enum ARCSIGN_TYPE {ARCSIGN_NONE,ARCSIGN_OLD,ARCSIGN_CURRENT,ARCSIGN_FUTURE};
-
 class Archive:public File
 {
   private:
-    ARCSIGN_TYPE IsSignature(const byte *D,size_t Size);
+    bool IsSignature(byte *D);
     void UpdateLatestTime(FileHeader *CurBlock);
     void ConvertNameCase(char *Name);
-#ifndef __BIONIC__
     void ConvertNameCase(wchar *Name);
-#endif
     void ConvertUnknownHeader();
     size_t ReadOldHeader();
     void UnexpEndArcMsg();
@@ -50,23 +46,13 @@ class Archive:public File
     size_t SearchSubBlock(const char *Type);
     int ReadBlock(int BlockType);
     void WriteBlock(int BlockType,BaseBlock *wb=NULL);
-#ifndef __BIONIC__
     int PrepareNamesToWrite(char *Name,wchar *NameW,char *DestName,byte *DestNameW);
-#else
-    int PrepareNamesToWrite(char *Name,char *DestName);
-#endif
     void SetLhdSize();
     size_t ReadHeader();
     void CheckArc(bool EnableBroken);
-#ifndef __BIONIC__
     void CheckOpen(const char *Name,const wchar *NameW=NULL);
     bool WCheckOpen(const char *Name,const wchar *NameW=NULL);
     bool GetComment(Array<byte> *CmtData,Array<wchar> *CmtDataW);
-#else
-    void CheckOpen(const char *Name);
-    bool WCheckOpen(const char *Name);
-    bool GetComment(Array<byte> *CmtData);
-#endif
     void ViewComment();
     void ViewFileComment();
     void SetLatestTime(RarTime *NewTime);
@@ -80,11 +66,7 @@ class Archive:public File
     void AddSubData(byte *SrcData,size_t DataSize,File *SrcFile,const char *Name,bool AllowSplit);
     bool ReadSubData(Array<byte> *UnpData,File *DestFile);
     int GetHeaderType() {return(CurHeaderType);};
-#ifndef __BIONIC__
     size_t ReadCommentData(Array<byte> *CmtData,Array<wchar> *CmtDataW);
-#else
-    size_t ReadCommentData(Array<byte> *CmtData);
-#endif
     void WriteCommentData(byte *Data,size_t DataSize,bool FileComment);
     RAROptions* GetRAROptions() {return(Cmd);}
     void SetSilentOpen(bool Mode) {SilentOpen=Mode;}
@@ -130,9 +112,7 @@ class Archive:public File
     bool NewArchive;
 
     char FirstVolumeName[NM];
-#ifndef __BIONIC__
     wchar FirstVolumeNameW[NM];
-#endif
 };
 
 

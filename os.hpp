@@ -18,9 +18,6 @@
   #include <new>
 #endif
 
-#ifdef __BIONIC__
-#include <endian.h>
-#endif
 
 #if defined(_WIN_ALL) || defined(_EMX)
 
@@ -158,9 +155,7 @@
 #endif
 #include <pwd.h>
 #include <grp.h>
-#ifndef __BIONIC__
 #include <wchar.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
