@@ -9,7 +9,7 @@ CmdExtract::CmdExtract()
   *DestFileNameW=0;
 
   TotalFileCount=0;
-  *Password=0;
+  Password.Set(L"");
   Unp=new Unpack(&DataIO);
   Unp->Init();
 }
@@ -18,7 +18,6 @@ CmdExtract::CmdExtract()
 CmdExtract::~CmdExtract()
 {
   delete Unp;
-  memset(Password,0,sizeof(Password));
 }
 
 
@@ -37,14 +36,14 @@ void CmdExtract::DoExtract(CommandData *Cmd)
   {
     while (true)
     {
-      wchar PrevCmdPassword[MAXPASSWORD];
-      wcscpy(PrevCmdPassword,Cmd->Password);
+      SecPassword PrevCmdPassword;
+      PrevCmdPassword=Cmd->Password;
 
       EXTRACT_ARC_CODE Code=ExtractArchive(Cmd);
 
       // Restore Cmd->Password, which could be changed in IsArchive() call
       // for next header encrypted archive.
-      wcscpy(Cmd->Password,PrevCmdPassword);
+      Cmd->Password=PrevCmdPassword;
 
       if (Code!=EXTRACT_ARC_REPEAT)
         break;
@@ -85,9 +84,9 @@ void CmdExtract::ExtractArchiveInit(CommandData *Cmd,Archive &Arc)
   FirstFile=true;
 #endif
 
-  if (*Cmd->Password!=0)
-    wcscpy(Password,Cmd->Password);
-  PasswordAll=(*Cmd->Password!=0);
+  PasswordAll=(Cmd->Password.IsSet());
+  if (PasswordAll)
+    Password=Cmd->Password;
 
   DataIO.UnpVolume=false;
 
@@ -426,31 +425,37 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
   {
     if ((Arc.NewLhd.Flags & LHD_PASSWORD)!=0)
 #ifndef RARDLL
-      if (*Password==0)
+      if (!Password.IsSet())
 #endif
       {
 #ifdef RARDLL
-        if (*Cmd->Password==0)
+        if (!Cmd->Password.IsSet())
         {
           if (Cmd->Callback!=NULL)
           {
-            if (Cmd->Callback(UCM_NEEDPASSWORDW,Cmd->UserData,(LPARAM)Cmd->Password,ASIZE(Cmd->Password))==-1)
-              *Cmd->Password=0;
-            if (*Cmd->Password==0)
+            wchar PasswordW[MAXPASSWORD];
+            *PasswordW=0;
+            if (Cmd->Callback(UCM_NEEDPASSWORDW,Cmd->UserData,(LPARAM)PasswordW,ASIZE(PasswordW))==-1)
+              *PasswordW=0;
+            if (*PasswordW==0)
             {
               char PasswordA[MAXPASSWORD];
+              *PasswordA=0;
               if (Cmd->Callback(UCM_NEEDPASSWORD,Cmd->UserData,(LPARAM)PasswordA,ASIZE(PasswordA))==-1)
                 *PasswordA=0;
-              GetWideName(PasswordA,NULL,Cmd->Password,ASIZE(Cmd->Password));
+              GetWideName(PasswordA,NULL,PasswordW,ASIZE(PasswordW));
+              cleandata(PasswordA,sizeof(PasswordA));
             }
+            Cmd->Password.Set(PasswordW);
+            cleandata(PasswordW,sizeof(PasswordW));
           }
-          if (*Cmd->Password==0)
+          if (!Cmd->Password.IsSet())
             return false;
         }
-        wcscpy(Password,Cmd->Password);
+        Password=Cmd->Password;
 
 #else
-        if (!GetPassword(PASSWORD_FILE,ArcFileName,ArcFileNameW,Password,ASIZE(Password)))
+        if (!GetPassword(PASSWORD_FILE,ArcFileName,ArcFileNameW,&Password))
         {
           PasswordCancelled=true;
           return(false);
@@ -467,7 +472,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
             case -1:
               ErrHandler.Exit(RARX_USERBREAK);
             case 2:
-              if (!GetPassword(PASSWORD_FILE,ArcFileName,ArcFileNameW,Password,ASIZE(Password)))
+              if (!GetPassword(PASSWORD_FILE,ArcFileName,ArcFileNameW,&Password))
               {
                 return(false);
               }
@@ -624,7 +629,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
     }
 
     // Skip encrypted file if no password is specified.
-    if ((Arc.NewLhd.Flags & LHD_PASSWORD)!=0 && *Password==0)
+    if ((Arc.NewLhd.Flags & LHD_PASSWORD)!=0 && !Password.IsSet())
     {
       ErrHandler.SetErrorCode(RARX_WARNING);
 #ifdef RARDLL
@@ -774,15 +779,21 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
 #ifdef RARDLL
               Cmd->DllError=ERAR_ECREATE;
 #endif
-              if (!IsNameUsable(DestFileName))
+              if (!IsNameUsable(DestFileName) && (!WideName || !IsNameUsable(DestNameW)))
               {
                 Log(Arc.FileName,St(MCorrectingName));
-                char OrigName[sizeof(DestFileName)];
+                char OrigName[ASIZE(DestFileName)];
+                wchar OrigNameW[ASIZE(DestFileNameW)];
                 strncpyz(OrigName,DestFileName,ASIZE(OrigName));
+                wcsncpyz(OrigNameW,NullToEmpty(DestNameW),ASIZE(OrigNameW));
 
                 MakeNameUsable(DestFileName,true);
-                CreatePath(DestFileName,NULL,true);
-                if (FileCreate(Cmd,&CurFile,DestFileName,NULL,Cmd->Overwrite,&UserReject,Arc.NewLhd.FullUnpSize,Arc.NewLhd.FileTime,true))
+
+                if (WideName)
+                  MakeNameUsable(DestNameW,true);
+
+                CreatePath(DestFileName,DestNameW,true);
+                if (FileCreate(Cmd,&CurFile,DestFileName,DestNameW,Cmd->Overwrite,&UserReject,Arc.NewLhd.FullUnpSize,Arc.NewLhd.FileTime,true))
                 {
 #ifndef SFX_MODULE
                   Log(Arc.FileName,St(MRenaming),OrigName,DestFileName);
@@ -845,23 +856,29 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,size_t HeaderS
       DataIO.UnpFileCRC=Arc.OldFormat ? 0 : 0xffffffff;
       DataIO.PackedCRC=0xffffffff;
 
-      wchar FilePassword[MAXPASSWORD];
+      SecPassword FilePassword;
 #ifdef _WIN_ALL
       if (Arc.NewLhd.HostOS==HOST_MSDOS/* && Arc.NewLhd.UnpVer<=25*/)
       {
         // We need the password in OEM encoding if file was encrypted by
         // native RAR/DOS (not extender based). Let's make the conversion.
+        wchar PlainPsw[MAXPASSWORD];
+        Password.Get(PlainPsw,ASIZE(PlainPsw));
         char PswA[MAXPASSWORD];
-        CharToOemBuffW(Password,PswA,ASIZE(PswA));
-        CharToWide(PswA,FilePassword,ASIZE(FilePassword));
-        FilePassword[ASIZE(FilePassword)-1]=0;
+        CharToOemBuffW(PlainPsw,PswA,ASIZE(PswA));
+        PswA[ASIZE(PswA)-1]=0;
+        CharToWide(PswA,PlainPsw,ASIZE(PlainPsw));
+        PlainPsw[ASIZE(PlainPsw)-1]=0;
+        FilePassword.Set(PlainPsw);
+        cleandata(PlainPsw,sizeof(PlainPsw));
+        cleandata(PswA,sizeof(PswA));
       }
       else
 #endif
-        wcscpy(FilePassword,Password);
+        FilePassword=Password;
       
       DataIO.SetEncryption(
-        (Arc.NewLhd.Flags & LHD_PASSWORD)!=0 ? Arc.NewLhd.UnpVer:0,FilePassword,
+        (Arc.NewLhd.Flags & LHD_PASSWORD)!=0 ? Arc.NewLhd.UnpVer:0,&FilePassword,
         (Arc.NewLhd.Flags & LHD_SALT)!=0 ? Arc.NewLhd.Salt:NULL,false,
         Arc.NewLhd.UnpVer>=36);
       DataIO.SetPackedSizeToRead(Arc.NewLhd.FullPackSize);
