@@ -2,11 +2,11 @@
 # Makefile for UNIX - unrar
 
 # Linux using GCC
-CXX=g++
-CXXFLAGS=-O2
+CXX := $(CXX)
+CXXFLAGS := $(CFLAGS)
 LIBFLAGS=-fPIC
 DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
-STRIP=strip
+STRIP:=$(STRIP)
 DESTDIR=/usr
 
 # Linux using LCC
