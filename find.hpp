@@ -7,19 +7,15 @@ enum FINDDATA_FLAGS {
 
 struct FindData
 {
-  char Name[NM];
-#ifndef __BIONIC__
-  wchar NameW[NM];
-#endif
-  int64 Size;
+  wchar Name[NM];
+  uint64 Size;
   uint FileAttr;
-  uint FileTime;
   bool IsDir;
+  bool IsLink;
   RarTime mtime;
   RarTime ctime;
   RarTime atime;
 #ifdef _WIN_ALL
-  wchar ShortName[NM];
   FILETIME ftCreationTime; 
   FILETIME ftLastAccessTime; 
   FILETIME ftLastWriteTime; 
@@ -32,13 +28,10 @@ class FindFile
 {
   private:
 #ifdef _WIN_ALL
-    static HANDLE Win32Find(HANDLE hFind,const char *Mask,const wchar *MaskW,struct FindData *fd);
+    static HANDLE Win32Find(HANDLE hFind,const wchar *Mask,FindData *fd);
 #endif
 
-    char FindMask[NM];
-#ifndef __BIONIC__
-    wchar FindMaskW[NM];
-#endif
+    wchar FindMask[NM];
     bool FirstCall;
 #ifdef _WIN_ALL
     HANDLE hFind;
@@ -48,16 +41,9 @@ class FindFile
   public:
     FindFile();
     ~FindFile();
-    void SetMask(const char *FindMask);
-#ifndef __BIONIC__
-    void SetMaskW(const wchar *FindMaskW);
-#endif
+    void SetMask(const wchar *Mask);
     bool Next(FindData *fd,bool GetSymLink=false);
-#ifndef __BIONIC__
-    static bool FastFind(const char *FindMask,const wchar *FindMaskW,FindData *fd,bool GetSymLink=false);
-#else
-    static bool FastFind(const char *FindMask,FindData *fd,bool GetSymLink=false);
-#endif
+    static bool FastFind(const wchar *FindMask,FindData *fd,bool GetSymLink=false);
 };
 
 #endif

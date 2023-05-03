@@ -1,124 +1,76 @@
 #ifndef _RAR_PATHFN_
 #define _RAR_PATHFN_
 
-char* PointToName(const char *Path);
-#ifndef __BIONIC__
 wchar* PointToName(const wchar *Path);
-#endif
-char* PointToLastChar(const char *Path);
-#ifndef __BIONIC__
 wchar* PointToLastChar(const wchar *Path);
-#endif
-char* ConvertPath(const char *SrcPath,char *DestPath);
-#ifndef __BIONIC__
-wchar* ConvertPath(const wchar *SrcPath,wchar *DestPath);
-#endif
-void SetExt(char *Name,const char *NewExt);
-#ifndef __BIONIC__
-void SetExt(wchar *Name,const wchar *NewExt);
-#endif
-void SetSFXExt(char *SFXName);
-#ifndef __BIONIC__
-void SetSFXExt(wchar *SFXName);
-#endif
-char *GetExt(const char *Name);
-#ifndef __BIONIC__
+wchar* ConvertPath(const wchar *SrcPath,wchar *DestPath,size_t DestSize);
+void SetName(wchar *FullName,const wchar *Name,size_t MaxSize);
+void SetExt(wchar *Name,const wchar *NewExt,size_t MaxSize);
+void SetSFXExt(wchar *SFXName,size_t MaxSize);
 wchar *GetExt(const wchar *Name);
-#endif
-bool CmpExt(const char *Name,const char *Ext);
-#ifndef __BIONIC__
 bool CmpExt(const wchar *Name,const wchar *Ext);
-#endif
-#ifndef __BIONIC__
-bool IsWildcard(const char *Str,const wchar *StrW=NULL);
-#else
-bool IsWildcard(const char *Str);
-#endif
+bool IsWildcard(const wchar *Str);
 bool IsPathDiv(int Ch);
 bool IsDriveDiv(int Ch);
-int GetPathDisk(const char *Path);
-#ifndef __BIONIC__
+bool IsDriveLetter(const wchar *Path);
 int GetPathDisk(const wchar *Path);
-#endif
-void AddEndSlash(char *Path);
-#ifndef __BIONIC__
-void AddEndSlash(wchar *Path);
-#endif
-void GetFilePath(const char *FullName,char *Path,int MaxLength);
-#ifndef __BIONIC__
-void GetFilePath(const wchar *FullName,wchar *Path,int MaxLength);
-#endif
-void RemoveNameFromPath(char *Path);
-#ifndef __BIONIC__
+void AddEndSlash(wchar *Path,size_t MaxLength);
+void MakeName(const wchar *Path,const wchar *Name,wchar *Pathname,size_t MaxSize);
+void GetFilePath(const wchar *FullName,wchar *Path,size_t MaxLength);
 void RemoveNameFromPath(wchar *Path);
+#if defined(_WIN_ALL) && !defined(SFX_MODULE)
+bool GetAppDataPath(wchar *Path,size_t MaxSize,bool Create);
+void GetRarDataPath(wchar *Path,size_t MaxSize,bool Create);
 #endif
-void GetAppDataPath(char *Path);
-#ifndef __BIONIC__
-void GetAppDataPath(wchar *Path);
+#ifndef SFX_MODULE
+bool EnumConfigPaths(uint Number,wchar *Path,size_t MaxSize,bool Create);
+void GetConfigName(const wchar *Name,wchar *FullName,size_t MaxSize,bool CheckExist,bool Create);
 #endif
-void GetRarDataPath(char *Path);
-#ifndef __BIONIC__
-void GetRarDataPath(wchar *Path);
-bool EnumConfigPaths(wchar *Path,int Number);
-#endif
-bool EnumConfigPaths(char *Path,int Number);
-void GetConfigName(const char *Name,char *FullName,bool CheckExist);
-#ifndef __BIONIC__
-void GetConfigName(const wchar *Name,wchar *FullName,bool CheckExist);
-#endif
-char* GetVolNumPart(char *ArcName);
-#ifndef __BIONIC__
-wchar* GetVolNumPart(wchar *ArcName);
-void NextVolumeName(char *ArcName,wchar *ArcNameW,uint MaxLength,bool OldNumbering);
-#else
-void NextVolumeName(char *ArcName,uint MaxLength,bool OldNumbering);
-#endif
-bool IsNameUsable(const char *Name);
-#ifndef __BIONIC__
+wchar* GetVolNumPart(const wchar *ArcName);
+void NextVolumeName(wchar *ArcName,uint MaxLength,bool OldNumbering);
 bool IsNameUsable(const wchar *Name);
-#endif
-void MakeNameUsable(char *Name,bool Extended);
-#ifndef __BIONIC__
 void MakeNameUsable(wchar *Name,bool Extended);
-#endif
-char* UnixSlashToDos(char *SrcName,char *DestName=NULL,uint MaxLength=NM);
-char* DosSlashToUnix(char *SrcName,char *DestName=NULL,uint MaxLength=NM);
-#ifndef __BIONIC__
-wchar* UnixSlashToDos(wchar *SrcName,wchar *DestName=NULL,uint MaxLength=NM);
-wchar* DosSlashToUnix(wchar *SrcName,wchar *DestName=NULL,uint MaxLength=NM);
-#endif
-void ConvertNameToFull(const char *Src,char *Dest);
-#ifndef __BIONIC__
-void ConvertNameToFull(const wchar *Src,wchar *Dest);
-#endif
-bool IsFullPath(const char *Path);
-#ifndef __BIONIC__
-bool IsFullPath(const wchar *Path);
-#endif
-bool IsDiskLetter(const char *Path);
-#ifndef __BIONIC__
-bool IsDiskLetter(const wchar *Path);
-#endif
-void GetPathRoot(const char *Path,char *Root);
-#ifndef __BIONIC__
-void GetPathRoot(const wchar *Path,wchar *Root);
-int ParseVersionFileName(char *Name,wchar *NameW,bool Truncate);
+
+void UnixSlashToDos(const char *SrcName,char *DestName,size_t MaxLength);
+void DosSlashToUnix(const char *SrcName,char *DestName,size_t MaxLength);
+void UnixSlashToDos(const wchar *SrcName,wchar *DestName,size_t MaxLength);
+void DosSlashToUnix(const wchar *SrcName,wchar *DestName,size_t MaxLength);
+
+inline void SlashToNative(const char *SrcName,char *DestName,size_t MaxLength)
+{
+#ifdef _WIN_ALL
+  UnixSlashToDos(SrcName,DestName,MaxLength);
 #else
-int ParseVersionFileName(char *Name,bool Truncate);
+  DosSlashToUnix(SrcName,DestName,MaxLength);
 #endif
-char* VolNameToFirstName(const char *VolName,char *FirstName,bool NewNumbering);
-#ifndef __BIONIC__
-wchar* VolNameToFirstName(const wchar *VolName,wchar *FirstName,bool NewNumbering);
+}
+
+inline void SlashToNative(const wchar *SrcName,wchar *DestName,size_t MaxLength)
+{
+#ifdef _WIN_ALL
+  UnixSlashToDos(SrcName,DestName,MaxLength);
+#else
+  DosSlashToUnix(SrcName,DestName,MaxLength);
+#endif
+}
+
+void ConvertNameToFull(const wchar *Src,wchar *Dest,size_t MaxSize);
+bool IsFullPath(const wchar *Path);
+bool IsFullRootPath(const wchar *Path);
+void GetPathRoot(const wchar *Path,wchar *Root,size_t MaxSize);
+int ParseVersionFileName(wchar *Name,bool Truncate);
+wchar* VolNameToFirstName(const wchar *VolName,wchar *FirstName,size_t MaxSize,bool NewNumbering);
 wchar* GetWideName(const char *Name,const wchar *NameW,wchar *DestW,size_t DestSize);
-char* GetAsciiName(const wchar *NameW,char *Name,size_t DestSize);
-#endif
 
 #ifndef SFX_MODULE
-#ifndef __BIONIC__
-void GenerateArchiveName(char *ArcName,wchar *ArcNameW,size_t MaxSize,char *GenerateMask,bool Archiving);
-#else
-void GenerateArchiveName(char *ArcName,size_t MaxSize,char *GenerateMask,bool Archiving);
+void GenerateArchiveName(wchar *ArcName,size_t MaxSize,const wchar *GenerateMask,bool Archiving);
 #endif
+
+#ifdef _WIN_ALL
+bool GetWinLongPath(const wchar *Src,wchar *Dest,size_t MaxSize);
+void ConvertToPrecomposed(wchar *Name,size_t NameSize);
+void MakeNameCompatible(wchar *Name,size_t MaxSize);
 #endif
+
 
 #endif
