@@ -43,6 +43,9 @@
 #$(call add-clean-step, rm -rf $(OUT_DIR)/target/common/obj/JAVA_LIBRARIES/core_intermediates)
 #$(call add-clean-step, find $(OUT_DIR) -type f -name "IGTalkSession*" -print0 | xargs -0 rm -f)
 #$(call add-clean-step, rm -rf $(PRODUCT_OUT)/data/*)
+$(call add-clean-step, rm -rfv $(OUT_DIR)/soong/.intermediates/external/unrar)
+$(call add-clean-step, rm -rfv $(PRODUCT_OUT)/obj/EXECUTABLES/unrar_intermediates)
+# $(call add-clean-step, find $(PRODUCT_OUT) -type f -name "unrar" -delete)
 
 # ************************************************
 # NEWER CLEAN STEPS MUST BE AT THE END OF THE LIST

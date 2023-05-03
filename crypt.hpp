@@ -83,7 +83,7 @@ class CryptData
 
     KDF3CacheItem KDF3Cache[4];
     uint KDF3CachePos;
-    
+
     KDF5CacheItem KDF5Cache[4];
     uint KDF5CachePos;
 
@@ -92,7 +92,7 @@ class CryptData
     Rijndael rin;
 
     uint CRCTab[256]; // For RAR 1.5 and RAR 2.0 encryption.
-    
+
     byte SubstTable20[256];
     uint Key20[4];
 
@@ -117,6 +117,7 @@ class CheckPassword
     enum CONFIDENCE {CONFIDENCE_HIGH,CONFIDENCE_MEDIUM,CONFIDENCE_LOW};
     virtual CONFIDENCE GetConfidence()=0;
     virtual bool Check(SecPassword *Password)=0;
+    virtual ~CheckPassword() = default;
 };
 
 class RarCheckPassword:public CheckPassword

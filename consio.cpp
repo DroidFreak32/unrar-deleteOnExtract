@@ -247,7 +247,6 @@ static void GetPasswordText(wchar *Str,uint MaxLength)
   Str[MaxLength-1]=0;
   RemoveLF(Str);
 }
-
 #endif
 
 

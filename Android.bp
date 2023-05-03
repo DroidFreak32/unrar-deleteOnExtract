@@ -72,8 +72,6 @@ cc_binary {
         "-Wno-unused-function",
         "-Wno-unused-parameter",
         "-Wno-unused-variable",
-        "-Wno-non-virtual-dtor",
-        "-Wno-missing-field-initializers",
     ],
 
 }

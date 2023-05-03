@@ -583,7 +583,6 @@ size_t Archive::ReadHeader50()
     RarCheckPassword CheckPwd;
     if (CryptHead.UsePswCheck && !BrokenHeader)
       CheckPwd.Set(CryptHead.Salt,HeadersInitV,CryptHead.Lg2Count,CryptHead.PswCheck);
-    
     while (true) // Repeat the password prompt for wrong passwords.
     {
       RequestArcPassword(CheckPwd.IsSet() ? &CheckPwd:NULL);
