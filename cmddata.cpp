@@ -945,6 +945,7 @@ void CommandData::ProcessSwitch(const wchar *Switch)
 void CommandData::BadSwitch(const wchar *Switch)
 {
   mprintf(St(MUnknownOption),Switch);
+  mprintf(L"\n");
   ErrHandler.Exit(RARX_USERERROR);
 }
 #endif
