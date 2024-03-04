@@ -38,13 +38,13 @@ CmdExtract::CmdExtract(CommandData *Cmd)
 
 CmdExtract::~CmdExtract()
 {
-  ReleaseAnalyzeData();
+  FreeAnalyzeData();
   delete Unp;
   delete Analyze;
 }
 
 
-void CmdExtract::ReleaseAnalyzeData()
+void CmdExtract::FreeAnalyzeData()
 {
   for (size_t I=0;I<RefList.Size();I++)
   {
@@ -1472,7 +1472,7 @@ bool CmdExtract::CheckUnpVer(Archive &Arc,const wchar *ArcFileName)
 // 
 void CmdExtract::AnalyzeArchive(const wchar *ArcName,bool Volume,bool NewNumbering)
 {
-  ReleaseAnalyzeData(); // If processing non-first archive in multiple archives set.
+  FreeAnalyzeData(); // If processing non-first archive in multiple archives set.
 
   wchar *ArgName=Cmd->FileArgs.GetString();
   Cmd->FileArgs.Rewind();
@@ -1487,9 +1487,15 @@ void CmdExtract::AnalyzeArchive(const wchar *ArcName,bool Volume,bool NewNumberi
     wcsncpyz(NextName,ArcName,ASIZE(NextName));
   
   bool MatchFound=false;
-  bool FirstVolume=true;
   bool PrevMatched=false;
   bool OpenNext=false;
+
+  bool FirstVolume=true;
+  
+  // We shall set FirstFile once for all volumes and not for each volume.
+  // So we do not reuse the outdated Analyze->StartPos from previous volume
+  // if extracted file resides completely in the beginning of current one.
+  bool FirstFile=true;
 
   while (true)
   {
@@ -1508,7 +1514,6 @@ void CmdExtract::AnalyzeArchive(const wchar *ArcName,bool Volume,bool NewNumberi
     }
 
     OpenNext=false;
-    bool FirstFile=true;
     while (Arc.ReadHeader()>0)
     {
       Wait();
@@ -1526,13 +1531,18 @@ void CmdExtract::AnalyzeArchive(const wchar *ArcName,bool Volume,bool NewNumberi
           if (!MatchFound && !Arc.FileHead.Solid) // Can start extraction from here.
           {
             // We would gain nothing and unnecessarily complicate extraction
-            // by setting these values for first volume or first archived file.
+            // if we set StartName for first volume or StartPos for first
+            // archived file.
             if (!FirstVolume)
               wcsncpyz(Analyze->StartName,NextName,ASIZE(Analyze->StartName));
+
+            // We shall set FirstFile once for all volumes for this code
+            // to work properly. Alternatively we could append 
+            // "|| Analyze->StartPos!=0" to the condition, so we do not reuse
+            // the outdated Analyze->StartPos value from previous volume.
             if (!FirstFile)
               Analyze->StartPos=Arc.CurBlockPos;
           }
-          FirstFile=false;
 
           if (Cmd->IsProcessFile(Arc.FileHead,NULL,MATCH_WILDSUBPATH,0,NULL,0)!=0)
           {
@@ -1577,16 +1587,18 @@ void CmdExtract::AnalyzeArchive(const wchar *ArcName,bool Volume,bool NewNumberi
           {
             if (PrevMatched) // First non-matched item after matched.
             {
-              // We would gain nothing and unnecessarily complicate extraction
-              // by setting these values for first volume or first archived file.
+              // We would perform the unnecessarily string comparison
+              // when extracting if we set this value for first volume
+              // or non-volume archive.
               if (!FirstVolume)
                 wcsncpyz(Analyze->EndName,NextName,ASIZE(Analyze->EndName));
-              if (!FirstFile)
-                Analyze->EndPos=Arc.CurBlockPos;
+              Analyze->EndPos=Arc.CurBlockPos;
             }
             PrevMatched=false;
           }
         }
+
+        FirstFile=false;
         if (Arc.FileHead.SplitAfter)
         {
           OpenNext=true; // Allow open next volume.
@@ -1601,6 +1613,12 @@ void CmdExtract::AnalyzeArchive(const wchar *ArcName,bool Volume,bool NewNumberi
     {
       NextVolumeName(NextName,ASIZE(NextName),!Arc.NewNumbering);
       FirstVolume=false;
+
+      // Needed for multivolume archives. Added in case some 'break'
+      // will quit early from loop above, so we do not set it in the loop.
+      // Now it can happen for hypothetical archive without file records
+      // and with HEAD_ENDARC record.
+      FirstFile=false;
     }
     else
       break;
