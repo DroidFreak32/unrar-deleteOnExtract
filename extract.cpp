@@ -644,6 +644,8 @@ bool CmdExtract::ExtractCurrentFile(Archive &Arc,size_t HeaderSize,bool &Repeat)
         break;
       }
     }
+    else
+      DataIO.SetEncryption(false,CRYPT_NONE,NULL,NULL,NULL,0,NULL,NULL);
 
 #ifdef RARDLL
     if (*Cmd->DllDestName!=0)
