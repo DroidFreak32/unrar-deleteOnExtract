@@ -27,8 +27,8 @@ void SetExtraInfo20(CommandData *Cmd,Archive &Arc,wchar *Name)
   {
 #ifdef _UNIX
     case UO_HEAD:
-//      if (Cmd->ProcessOwners)
-//        ExtractUnixOwner20(Arc,Name);
+      if (Cmd->ProcessOwners)
+        ExtractUnixOwner20(Arc,Name);
       break;
 #endif
 #ifdef _WIN_ALL
