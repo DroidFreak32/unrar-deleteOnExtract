@@ -42,11 +42,11 @@ void SetExtraInfo20(CommandData *Cmd,Archive &Arc,const std::wstring &Name)
 // RAR3 and RAR5 service header extra records.
 void SetExtraInfo(CommandData *Cmd,Archive &Arc,const std::wstring &Name)
 {
-#ifdef _UNIX
-  if (!Cmd->Test && Cmd->ProcessOwners && Arc.Format==RARFMT15 &&
-      Arc.SubHead.CmpName(SUBHEAD_TYPE_UOWNER))
-    ExtractUnixOwner30(Arc,Name.c_str());
-#endif
+// #ifdef _UNIX
+//   if (!Cmd->Test && Cmd->ProcessOwners && Arc.Format==RARFMT15 &&
+//       Arc.SubHead.CmpName(SUBHEAD_TYPE_UOWNER))
+//     ExtractUnixOwner30(Arc,Name.c_str());
+// #endif
 #ifdef _WIN_ALL
   if (!Cmd->Test && Cmd->ProcessOwners && Arc.SubHead.CmpName(SUBHEAD_TYPE_ACL))
     ExtractACL(Arc,Name);
