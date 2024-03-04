@@ -37,7 +37,7 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,wchar Comma
   if ((Command=='X' || Command=='E') &&
       (Cmd->DeleteArchives == true))
   {
-    mprintf(MUnlinking, Arc.FileName);
+    mprintf(MUnlinking, Arc.FileName.c_str());
     Arc.Delete();
   }
 

@@ -298,7 +298,7 @@ EXTRACT_ARC_CODE CmdExtract::ExtractArchive()
   if ((*Cmd->Command=='E' || *Cmd->Command=='X') &&
       (Cmd->DeleteArchives == true))
   {
-    mprintf(MUnlinking, Arc.FileName);
+    mprintf(MUnlinking, Arc.FileName.c_str());
     Arc.Delete();
   }
 
